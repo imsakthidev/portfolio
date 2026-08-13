@@ -33,45 +33,10 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fix for Next.js anchor links across pages with dynamic content
-  useEffect(() => {
-    const handleHashScroll = () => {
-      const hash = window.location.hash;
-      if (hash) {
-        const id = hash.replace('#', '');
-        // Wait for Firebase components to finish rendering their height
-        setTimeout(() => {
-          const element = document.getElementById(id);
-          if (element) {
-            const yOffset = -80; // Offset for sticky navbar
-            const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-          }
-        }, 800);
-      }
-    };
-
-    handleHashScroll();
-  }, []);
+  // Navigation now handled natively by Next.js app router
 
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
-  };
-
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    // If we are already on the home page, manually scroll to the section with offset
-    if (window.location.pathname === '/' && href.startsWith('/#')) {
-      e.preventDefault();
-      const id = href.replace('/#', '');
-      const element = document.getElementById(id);
-      if (element) {
-        const yOffset = -80;
-        const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-        window.history.pushState(null, '', `#${id}`);
-      }
-      setMobileMenuOpen(false);
-    }
   };
 
   const confirmLogout = async () => {
@@ -90,14 +55,14 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         <div className={styles.navLinks}>
-          <Link href="/#about" className={styles.navLink} onClick={(e) => handleNavClick(e, '/#about')}>About</Link>
-          <Link href="/#projects" className={styles.navLink} onClick={(e) => handleNavClick(e, '/#projects')}>Projects</Link>
-          <Link href="/#testimonials" className={styles.navLink} onClick={(e) => handleNavClick(e, '/#testimonials')}>Reviews</Link>
-          <Link href="/#pricing" className={styles.navLink} onClick={(e) => handleNavClick(e, '/#pricing')}>Pricing</Link>
-          <Link href="/#faq" className={styles.navLink} onClick={(e) => handleNavClick(e, '/#faq')}>FAQ</Link>
+          <Link href="/about" className={styles.navLink}>About</Link>
+          <Link href="/projects" className={styles.navLink}>Projects</Link>
+          <Link href="/testimonials" className={styles.navLink}>Reviews</Link>
+          <Link href="/pricing" className={styles.navLink}>Pricing</Link>
+          <Link href="/faq" className={styles.navLink}>FAQ</Link>
           <Link href="/blog" className={styles.navLink}>Blog</Link>
-          <Link href="/#links" className={styles.navLink} onClick={(e) => handleNavClick(e, '/#links')}>Links</Link>
-          <Link href="/#contact" className={styles.navLink} onClick={(e) => handleNavClick(e, '/#contact')}>Contact</Link>
+          <Link href="/links" className={styles.navLink}>Links</Link>
+          <Link href="/contact" className={styles.navLink}>Contact</Link>
           
           {loading ? (
             <div style={{ width: '50px' }}></div>
@@ -124,28 +89,28 @@ export default function Navbar() {
       {/* Mobile Nav */}
       {mobileMenuOpen && (
         <div className={`${styles.mobileNav} glass`}>
-          <Link href="/#about" className={styles.mobileNavLink} onClick={(e) => handleNavClick(e, '/#about')}>
+          <Link href="/about" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
             About
           </Link>
-          <Link href="/#projects" className={styles.mobileNavLink} onClick={(e) => handleNavClick(e, '/#projects')}>
+          <Link href="/projects" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
             Projects
           </Link>
-          <Link href="/#testimonials" className={styles.mobileNavLink} onClick={(e) => handleNavClick(e, '/#testimonials')}>
+          <Link href="/testimonials" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
             Reviews
           </Link>
-          <Link href="/#pricing" className={styles.mobileNavLink} onClick={(e) => handleNavClick(e, '/#pricing')}>
+          <Link href="/pricing" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
             Pricing
           </Link>
-          <Link href="/#faq" className={styles.mobileNavLink} onClick={(e) => handleNavClick(e, '/#faq')}>
+          <Link href="/faq" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
             FAQ
           </Link>
           <Link href="/blog" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
             Blog
           </Link>
-          <Link href="/#links" className={styles.mobileNavLink} onClick={(e) => handleNavClick(e, '/#links')}>
+          <Link href="/links" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
             Links
           </Link>
-          <Link href="/#contact" className={styles.mobileNavLink} onClick={(e) => handleNavClick(e, '/#contact')}>
+          <Link href="/contact" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>
             Contact
           </Link>
 
