@@ -21,12 +21,12 @@ export default function AdminDashboard() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const router = useRouter();
 
-  // Redirect non-admins
+  // Redirect unauthenticated users
   useEffect(() => {
-    if (!authLoading && (!user || !isAdmin)) {
+    if (!authLoading && !user) {
       router.push('/');
     }
-  }, [user, authLoading, isAdmin, router]);
+  }, [user, authLoading, router]);
 
   const fetchData = async () => {
     try {
@@ -120,8 +120,21 @@ export default function AdminDashboard() {
     }
   };
 
-  if (authLoading || loadingData || !isAdmin) {
+  if (authLoading || (user && isAdmin && loadingData)) {
     return <div className={styles.container}>Loading dashboard...</div>;
+  }
+
+  if (!user) {
+    return null; // Will redirect via useEffect
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className={styles.container}>
+        <h1 className={styles.title} style={{ color: '#ef4444' }}>Access Denied</h1>
+        <p>You don't have permission to access the admin dashboard.</p>
+      </div>
+    );
   }
 
   return (
