@@ -82,13 +82,7 @@
 }
 
 .faqAnswerWrapper {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.3s ease;
-}
-
-.faqAnswerWrapperOpen {
-  grid-template-rows: 1fr;
+  /* Framer-motion handles height animation, no grid needed */
 }
 
 .faqAnswerInner {
