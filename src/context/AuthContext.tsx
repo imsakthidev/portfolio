@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
 interface AuthContextType {
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const data = userSnap.data();
             const status = data.status;
             
-            // Role check from Firestore database as backup
+            // Role check from Firestore database ONLY (secure boundary)
             if (data.role === 'admin') {
               userIsAdmin = true;
             }
@@ -78,19 +78,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               }
               return; // exit the auth loop
             }
-          }
 
-          // Otherwise, update their last login
-          await setDoc(userRef, {
-            uid: currentUser.uid,
-            email: currentUser.email,
-            displayName: currentUser.displayName || 'Anonymous',
-            photoURL: currentUser.photoURL || '',
-            lastLogin: serverTimestamp(),
-            // Ensure they are marked active if they don't have a status
-            status: userSnap.exists() && userSnap.data().status ? userSnap.data().status : 'active',
-            role: userIsAdmin ? 'admin' : (userSnap.exists() && userSnap.data().role ? userSnap.data().role : 'user')
-          }, { merge: true });
+            // Update their last login, do NOT write role or status to avoid privilege escalation bugs
+            await updateDoc(userRef, {
+              displayName: currentUser.displayName || 'Anonymous',
+              photoURL: currentUser.photoURL || '',
+              lastLogin: serverTimestamp(),
+            });
+          } else {
+            // New user, create initial profile safely
+            await setDoc(userRef, {
+              uid: currentUser.uid,
+              email: currentUser.email,
+              displayName: currentUser.displayName || 'Anonymous',
+              photoURL: currentUser.photoURL || '',
+              lastLogin: serverTimestamp(),
+              status: 'active',
+              role: 'user' // Default to normal user
+            });
+          }
         } catch (error) {
           console.error("Error saving user data:", error);
         }

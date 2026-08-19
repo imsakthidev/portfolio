@@ -1,8 +1,34 @@
-import fs from 'fs';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { z } from 'zod';
+
+// Simple in-memory rate limiter
+const rateLimitMap = new Map();
+
+function rateLimit(ip: string) {
+  const windowMs = 60 * 1000; // 1 minute
+  const maxRequests = 5; // 5 requests per minute
+
+  if (!rateLimitMap.has(ip)) {
+    rateLimitMap.set(ip, { count: 1, timer: setTimeout(() => rateLimitMap.delete(ip), windowMs) });
+    return true;
+  }
+
+  const data = rateLimitMap.get(ip);
+  if (data.count >= maxRequests) return false;
+  data.count += 1;
+  return true;
+}
+
+const chatSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant', 'system']),
+    content: z.string().max(2000, "Message too long") // max 2000 chars per message to protect quota
+  })).max(50, "Too many messages in history"), // max 50 turns
+  user: z.any().optional(),
+});
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -69,7 +95,29 @@ Note: Always say "Starting from" for premium and custom services.
 
 export async function POST(req: Request) {
   try {
-    const { messages, user } = await req.json();
+    // 1. Rate Limiting Check
+    const forwardedFor = req.headers.get('x-forwarded-for');
+    const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : 'unknown-ip';
+    
+    if (!rateLimit(ip)) {
+      return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 2. Validate input
+    const body = await req.json();
+    const validation = chatSchema.safeParse(body);
+
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: 'Validation failed' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { messages, user } = validation.data;
 
     const result = streamText({
       model: google('gemini-3.5-flash'),
@@ -77,8 +125,7 @@ export async function POST(req: Request) {
       messages,
       temperature: 0.7,
       onError: (error) => {
-        console.error('Stream Error:', error);
-        fs.writeFileSync('chat-stream-error.log', String(error?.error || error));
+        console.error('Stream Error logged on server.');
       },
       onFinish: async ({ text }) => {
         try {
@@ -103,9 +150,8 @@ export async function POST(req: Request) {
 
     return result.toTextStreamResponse();
   } catch (error: any) {
-    console.error('Chat API Error:', error);
-    fs.writeFileSync('chat-error.log', error.stack || error.message || String(error));
-    return new Response(JSON.stringify({ error: 'Failed to process chat request' }), {
+    console.error('Chat API Error logged on server.');
+    return new Response(JSON.stringify({ error: 'Failed to process chat request securely.' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
