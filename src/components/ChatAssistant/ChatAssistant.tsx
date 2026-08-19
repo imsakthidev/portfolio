@@ -7,6 +7,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import styles from './ChatAssistant.module.css';
 
+import { usePathname } from 'next/navigation';
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -16,6 +18,7 @@ interface Message {
 export default function ChatAssistant() {
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -35,6 +38,10 @@ export default function ChatAssistant() {
     "What is the Complete Personal Brand package?",
     "How do we get started?"
   ];
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   useEffect(() => {
     // Automatically open the chat window 1.5 seconds after page load (or 4.8s if splash screen is running)
