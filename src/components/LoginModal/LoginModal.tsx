@@ -6,7 +6,7 @@ import {
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
   sendEmailVerification, signOut
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { X, Eye, EyeOff } from 'lucide-react';
@@ -42,7 +42,8 @@ export default function LoginModal() {
       setGlobalToast('Signed in with Google successfully!');
       handleClose();
     } catch (err: any) {
-      setError(err.message);
+      console.error("Firebase Auth Error (Google):", err.code, err.message);
+      setError("Unable to load your account information. Please try signing in again.");
     }
   };
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -94,7 +95,11 @@ export default function LoginModal() {
         // Save to Firestore
         await setDoc(doc(db, 'users', userCredential.user.uid), {
           displayName: name,
-          email: userCredential.user.email
+          email: userCredential.user.email || null,
+          status: 'active',
+          role: 'user',
+          uid: userCredential.user.uid,
+          lastLogin: serverTimestamp()
         }, { merge: true });
 
         // Immediately sign them out so they must verify
@@ -117,6 +122,7 @@ export default function LoginModal() {
         handleClose();
       }
     } catch (err: any) {
+      console.error("Firebase Auth Error (Email):", err.code, err.message);
       if (err.code === 'auth/email-already-in-use') {
         setSuccessMsg('Please confirm your email first. Open the confirmation link we emailed you, then log in here.');
         setIsSignUp(false);
@@ -125,7 +131,7 @@ export default function LoginModal() {
       } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
         setError('Invalid email or password. Please try again or create an account.');
       } else {
-        setError(err.message);
+        setError("Unable to load your account information. Please try signing in again.");
       }
     }
   };
