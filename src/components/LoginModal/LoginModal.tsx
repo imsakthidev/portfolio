@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  signInWithPopup, GoogleAuthProvider,
+  signInWithRedirect, GoogleAuthProvider,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
-  sendEmailVerification, signOut, signInWithRedirect
+  sendEmailVerification, signOut
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -38,20 +38,16 @@ export default function LoginModal() {
     setSuccessMsg('');
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      setGlobalToast('Signed in with Google successfully!');
-      handleClose();
+      // Use redirect (not popup) — more reliable across all browsers.
+      // The result is handled by getRedirectResult in AuthContext on the next page load.
+      await signInWithRedirect(auth, provider);
+      // Note: execution does NOT continue here — the page will redirect.
     } catch (err: any) {
       console.error("Firebase Auth Error (Google):", err.code, err.message);
       if (err.code === 'auth/unauthorized-domain') {
-        setError("This domain is not authorized for Google Sign-In. The site admin must add it in Firebase Console -> Authentication -> Settings -> Authorized domains.");
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        // Fallback to redirect if popup is aggressively blocked by the browser
-        setError("Popup was blocked. Redirecting to Google Sign-In...");
-        const provider = new GoogleAuthProvider();
-        signInWithRedirect(auth, provider).catch(console.error);
+        setError("This domain is not authorized for Google Sign-In. Please contact the site admin.");
       } else {
-        setError("Unable to load your account information. Please try signing in again.");
+        setError("Unable to start Google Sign-In. Please try again.");
       }
     }
   };
@@ -121,7 +117,9 @@ export default function LoginModal() {
         
         // Check if email is verified (Google users bypass this automatically, email/pass users must verify)
         if (!userCredential.user.emailVerified) {
-          await signOut(auth);
+          // Wrap signOut in its own try/catch so a network error here doesn't
+          // bubble up to the generic catch and show a confusing error message.
+          try { await signOut(auth); } catch (_) {}
           setSuccessMsg('Please confirm your email first. Open the confirmation link we emailed you, then log in here.');
           return;
         }
@@ -140,8 +138,9 @@ export default function LoginModal() {
         setError('Invalid email or password. Please try again or create an account.');
       } else if (err.code === 'auth/too-many-requests') {
         setError('Access to this account has been temporarily disabled due to many failed login attempts. Please try again later.');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Network error. Please check your connection and try again.');
       } else {
-        // Only show generic error if it's an internal error or something unexpected
         setError(err.message || "Unable to load your account information. Please try signing in again.");
       }
     }
