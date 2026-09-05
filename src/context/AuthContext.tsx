@@ -107,7 +107,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsAdmin(userIsAdmin);
       setLoading(false);
 
-
+      // Auto-popup logic after 7 seconds if not logged in
+      if (!currentUser && !hasShownAutoModal) {
+        const timer = setTimeout(() => {
+          if (!auth.currentUser) {
+            setIsLoginModalOpen(true);
+            setHasShownAutoModal(true);
+          }
+        }, 7000);
+        return () => clearTimeout(timer);
+      }
     });
 
     return () => unsubscribe();
