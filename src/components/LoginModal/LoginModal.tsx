@@ -43,7 +43,13 @@ export default function LoginModal() {
       handleClose();
     } catch (err: any) {
       console.error("Firebase Auth Error (Google):", err.code, err.message);
-      setError("Unable to load your account information. Please try signing in again.");
+      if (err.code === 'auth/unauthorized-domain') {
+        setError("This domain is not authorized for Google Sign-In. The site admin must add it in Firebase Console -> Authentication -> Settings -> Authorized domains.");
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError("Sign-in popup was closed before completing.");
+      } else {
+        setError("Unable to load your account information. Please try signing in again.");
+      }
     }
   };
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -128,10 +134,13 @@ export default function LoginModal() {
         setIsSignUp(false);
       } else if (err.code === 'auth/invalid-email') {
         setError('Please enter a valid email address.');
-      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
         setError('Invalid email or password. Please try again or create an account.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Access to this account has been temporarily disabled due to many failed login attempts. Please try again later.');
       } else {
-        setError("Unable to load your account information. Please try signing in again.");
+        // Only show generic error if it's an internal error or something unexpected
+        setError(err.message || "Unable to load your account information. Please try signing in again.");
       }
     }
   };
