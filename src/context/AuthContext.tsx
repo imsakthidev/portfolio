@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut, getRedirectResult } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
@@ -37,19 +37,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Handle the result from signInWithRedirect (Google popup fallback)
-    // Without this, the auth session is lost on every page refresh after redirect sign-in
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result && result.user) {
-          setIsLoginModalOpen(false);
-          setGlobalToast('Signed in with Google successfully!');
-        }
-      })
-      .catch((error) => {
-        console.error('Redirect result error:', error.code, error.message);
-      });
-
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       
