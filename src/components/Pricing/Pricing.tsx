@@ -66,8 +66,14 @@ export default function Pricing() {
               transition={{ duration: 0.3 }}
             >
               <h3 className={styles.sectionTitle}><Layout size={20} style={{display:'inline', marginRight:'8px'}}/> Website Solutions</h3>
-              <div className={styles.cardsGrid}>
-                <div className={styles.card}>
+              <motion.div 
+                className={styles.cardsGrid}
+                initial="hidden" 
+                whileInView="show" 
+                viewport={{ once: true, margin: "-50px" }} 
+                variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
+              >
+                <motion.div className={styles.card} variants={{ hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } }}>
                   <div className={styles.cardHeader}>
                     <h3 className={styles.planName}>Starter Portfolio</h3>
                     <div className={styles.planPrice}>₹9,999</div>
@@ -80,9 +86,9 @@ export default function Pricing() {
                     <li className={styles.feature}><Clock size={16} className={styles.checkIcon} style={{color: '#64748b'}} /> Delivery: 3–5 Days (2 Revisions)</li>
                   </ul>
                   <button onClick={() => handleGetStarted('Starter Portfolio Website')} className={styles.ctaButton}>Get Started</button>
-                </div>
+                </motion.div>
 
-                <div className={`${styles.card} ${styles.popularCard}`}>
+                <motion.div className={`${styles.card} ${styles.popularCard}`} variants={{ hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } }}>
                   <div className={styles.popularBadge}>Most Popular</div>
                   <div className={styles.cardHeader}>
                     <h3 className={styles.planName}>Professional Portfolio</h3>
@@ -96,9 +102,9 @@ export default function Pricing() {
                     <li className={styles.feature}><Clock size={16} className={styles.checkIcon} style={{color: '#64748b'}} /> Delivery: 5–7 Days (5 Revisions)</li>
                   </ul>
                   <button onClick={() => handleGetStarted('Professional Portfolio Website')} className={styles.ctaButton}>Get Started</button>
-                </div>
+                </motion.div>
 
-                <div className={styles.card}>
+                <motion.div className={styles.card} variants={{ hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } }}>
                   <div className={styles.cardHeader}>
                     <h3 className={styles.planName}>Business Website</h3>
                     <div className={styles.planPrice}>₹34,999</div>
@@ -111,8 +117,8 @@ export default function Pricing() {
                     <li className={styles.feature}><Clock size={16} className={styles.checkIcon} style={{color: '#64748b'}} /> Delivery: 7–14 Days (30 Days Support)</li>
                   </ul>
                   <button onClick={() => handleGetStarted('Business Website')} className={styles.ctaButton}>Get Started</button>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
 
               <div className={styles.cardsGrid} style={{marginTop: '2rem'}}>
                 <div className={`${styles.card}`} style={{gridColumn: '1 / -1', maxWidth: '800px', margin: '0 auto', textAlign:'center'}}>
