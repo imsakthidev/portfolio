@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { 
-  OAuthProvider, 
+  OAuthProvider, signInWithPopup,
   signInWithEmailAndPassword, createUserWithEmailAndPassword,
   RecaptchaVerifier, signInWithPhoneNumber
 } from 'firebase/auth';
