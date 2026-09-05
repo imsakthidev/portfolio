@@ -107,19 +107,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsAdmin(userIsAdmin);
       setLoading(false);
 
-      // Auto-popup logic after 5 seconds if not logged in
-      // IMPORTANT: Re-check auth.currentUser at fire time, not at schedule time.
-      // Without this, the timer fires even if Firebase has since restored the user
-      // from localStorage (after a redirect sign-in), causing the modal to re-open.
-      if (!currentUser && !hasShownAutoModal) {
-        const timer = setTimeout(() => {
-          if (!auth.currentUser) {
-            setIsLoginModalOpen(true);
-            setHasShownAutoModal(true);
-          }
-        }, 5000);
-        return () => clearTimeout(timer);
-      }
+
     });
 
     return () => unsubscribe();
