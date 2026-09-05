@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   signInWithPopup, GoogleAuthProvider,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
-  sendEmailVerification, signOut
+  sendEmailVerification, signOut, signInWithRedirect
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -46,7 +46,10 @@ export default function LoginModal() {
       if (err.code === 'auth/unauthorized-domain') {
         setError("This domain is not authorized for Google Sign-In. The site admin must add it in Firebase Console -> Authentication -> Settings -> Authorized domains.");
       } else if (err.code === 'auth/popup-closed-by-user') {
-        setError("Sign-in popup was closed before completing.");
+        // Fallback to redirect if popup is aggressively blocked by the browser
+        setError("Popup was blocked. Redirecting to Google Sign-In...");
+        const provider = new GoogleAuthProvider();
+        signInWithRedirect(auth, provider).catch(console.error);
       } else {
         setError("Unable to load your account information. Please try signing in again.");
       }
@@ -57,11 +60,10 @@ export default function LoginModal() {
     setError('');
     setSuccessMsg('');
 
-    // Strictly enforce a standard valid email domain (e.g. username@gmail.com)
-    // This rejects junk domains like .zz or .cc
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|net|in|edu|gov|co)$/i;
+    // Enforce a standard valid email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address (e.g., username@gmail.com)");
+      setError("Please enter a valid email address.");
       return;
     }
 
