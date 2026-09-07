@@ -58,38 +58,33 @@ export async function POST(req: Request) {
 
     await transporter.sendMail({
       from: `"Sakthi Speaks" <${process.env.EMAIL_USER}>`,
+      replyTo: process.env.EMAIL_USER,
       to: email,
-      subject: 'Verify your email — Sakthi Speaks',
+      subject: 'Please verify your email address',
+      text: `Hi there!\n\nThanks for creating an account on Sakthi Speaks.\n\nPlease verify your email address by clicking the link below:\n${verificationLink}\n\nIf you didn't create this account, you can safely ignore this email.\n\nThanks,\nSakthi Speaks`,
       html: `
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px; background: #0f0f23; border-radius: 16px; border: 1px solid #1e1e3a;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #ffffff; font-size: 24px; margin: 0;">Sakthi Speaks</h1>
-            <p style="color: #a0a0c0; font-size: 14px; margin-top: 4px;">Digital Agency & Portfolio</p>
-          </div>
-          <div style="background: #1a1a2e; border-radius: 12px; padding: 24px; border: 1px solid #2a2a4a;">
-            <h2 style="color: #ffffff; font-size: 20px; margin: 0 0 12px 0;">Confirm your email</h2>
-            <p style="color: #b0b0d0; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0;">
-              Thanks for signing up! Click the button below to verify your email address and activate your account.
-            </p>
-            <div style="text-align: center; margin: 24px 0;">
-              <a href="${verificationLink}" style="
-                display: inline-block;
-                padding: 14px 32px;
-                background: linear-gradient(135deg, #7c3aed, #a855f7);
-                color: #ffffff;
-                border-radius: 8px;
-                text-decoration: none;
-                font-weight: 600;
-                font-size: 16px;
-              ">Verify My Email</a>
-            </div>
-            <p style="color: #808098; font-size: 13px; line-height: 1.5; margin: 0;">
-              If the button doesn't work, copy and paste this link into your browser:<br/>
-              <a href="${verificationLink}" style="color: #a855f7; word-break: break-all;">${verificationLink}</a>
-            </p>
-          </div>
-          <p style="color: #606078; font-size: 12px; text-align: center; margin-top: 20px;">
-            If you didn't create an account, you can safely ignore this email.
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <p>Hi there!</p>
+          <p>Thanks for creating an account on <strong>Sakthi Speaks</strong>.</p>
+          <p>Please verify your email address by clicking the link below:</p>
+          <p style="margin: 24px 0;">
+            <a href="${verificationLink}" style="
+              display: inline-block;
+              padding: 12px 24px;
+              background-color: #7c3aed;
+              color: #ffffff;
+              border-radius: 6px;
+              text-decoration: none;
+              font-weight: bold;
+            ">Verify Email Address</a>
+          </p>
+          <p style="font-size: 13px; color: #666;">
+            Or copy and paste this link in your browser:<br/>
+            <a href="${verificationLink}">${verificationLink}</a>
+          </p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+          <p style="font-size: 12px; color: #999;">
+            If you didn't create this account, you can safely ignore this email.
           </p>
         </div>
       `,
