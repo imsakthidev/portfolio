@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
-  signOut
+  sendEmailVerification, signOut
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -75,11 +75,32 @@ export default function LoginModal() {
         await updateProfile(userCredential.user, { displayName: name });
         
         // Send verification email via our custom API (avoids Firebase's spam-prone sender)
-        await fetch('/api/send-verification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        });
+        let emailSent = false;
+        try {
+          const verifyRes = await fetch('/api/send-verification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          });
+          if (verifyRes.ok) {
+            emailSent = true;
+          } else {
+            const verifyData = await verifyRes.json().catch(() => ({}));
+            console.error('Custom verification API error, falling back to Firebase:', verifyData);
+          }
+        } catch (fetchErr) {
+          console.error('Custom verification fetch failed, falling back to Firebase:', fetchErr);
+        }
+
+        // Fallback: use Firebase's built-in email if custom API failed
+        if (!emailSent) {
+          try {
+            await sendEmailVerification(userCredential.user);
+            emailSent = true;
+          } catch (fbErr) {
+            console.error('Firebase sendEmailVerification also failed:', fbErr);
+          }
+        }
         
         // Save to Firestore
         await setDoc(doc(db, 'users', userCredential.user.uid), {
@@ -94,7 +115,11 @@ export default function LoginModal() {
         // Immediately sign them out so they must verify
         await signOut(auth);
 
-        setSuccessMsg('Please confirm your email first. Open the confirmation link we emailed you, then log in here.');
+        if (emailSent) {
+          setSuccessMsg('Account created! Please check your inbox (and spam folder) for the verification link, then log in here.');
+        } else {
+          setSuccessMsg('Account created! A verification email was sent — please check your inbox and spam folder, then log in here.');
+        }
         // Switch to sign in view so they can log in later
         setIsSignUp(false);
       } else {
