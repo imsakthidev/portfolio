@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
-  sendEmailVerification, signOut
+  signOut
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -74,8 +74,12 @@ export default function LoginModal() {
         // Set the display name
         await updateProfile(userCredential.user, { displayName: name });
         
-        // Send verification email
-        await sendEmailVerification(userCredential.user);
+        // Send verification email via our custom API (avoids Firebase's spam-prone sender)
+        await fetch('/api/send-verification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
         
         // Save to Firestore
         await setDoc(doc(db, 'users', userCredential.user.uid), {
