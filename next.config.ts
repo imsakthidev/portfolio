@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['firebase-admin'],
   // Vercel natively supports Next.js, so no static export config is needed here!
   async headers() {
     return [

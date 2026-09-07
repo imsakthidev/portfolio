@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import { getAdminAuth } from '@/lib/firebaseAdmin';
+import { generateVerificationLink } from '@/lib/firebaseAdmin';
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; timer: ReturnType<typeof setTimeout> }>();
 
 function rateLimit(ip: string): boolean {
-  const windowMs = 60 * 1000; // 1 minute
+  const windowMs = 60 * 1000;
   const maxRequests = 3;
 
   if (!rateLimitMap.has(ip)) {
@@ -34,20 +34,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
     }
 
-    // Generate the verification link using Firebase Admin SDK
-    const actionCodeSettings = {
-      url: process.env.NEXT_PUBLIC_SITE_URL || 'https://sakthiispeaks.vercel.app',
-      handleCodeInApp: false,
-    };
-
-    const verificationLink = await getAdminAuth().generateEmailVerificationLink(email, actionCodeSettings);
-
-    // Send the email using the same Gmail SMTP you already use for the contact form
+    // Check SMTP credentials
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error('EMAIL_USER or EMAIL_PASS not set');
       return NextResponse.json({ error: 'Email service not configured.' }, { status: 500 });
     }
 
+    // Generate the verification link via REST API (no firebase-admin needed)
+    const continueUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sakthiispeaks.vercel.app';
+    const verificationLink = await generateVerificationLink(email, continueUrl);
+
+    // Send via Gmail SMTP
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
